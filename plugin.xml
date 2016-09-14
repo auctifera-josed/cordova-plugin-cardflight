@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    xmlns:rim="http://www.blackberry.com/ns/widgets"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-cardflight"
+    version="0.1.0">
+    <name>Card Flight</name>
+    <description>Cordova Card Flight Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>cordova,creditcard,cc,cardflight</keywords>
+    <repo></repo>
+
+    <js-module src="www/cardFlight.js" name="cardFlight">
+        <clobbers target="cardFlight" />
+    </js-module>
+
+
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="CDVCardFlight">
+                <param name="ios-package" value="CDVCardFlight"/>
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/CordovaCardFlight.h" />
+        <source-file src="src/ios/CordovaCardFlight.m" />
+        
+        <header-file src="src/ios/CardFlightSDK/CardFlight.h" />
+        <!-- <header-file src="src/ios/CardFlightSDK/CFTAccount.h" /> -->
+        <header-file src="src/ios/CardFlightSDK/CFTAttacheReader.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTBaseReader.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTCustomEntryTextField.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTCustomView.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTEnum.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTPaymentView.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTSessionManager.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTReader.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTCard.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTCharge.h" />
+        <header-file src="src/ios/CardFlightSDK/CFTAPIResource.h" />
+        <framework src="AVFoundation.framework" />
+        <framework src="AudioToolbox.framework" />
+        <framework src="MediaPlayer.framework" />
+        <framework src="MessageUI.framework" />
+        <framework src="ExternalAccessory.framework" />
+        <framework src="CoreGraphics.framework" />
+        <source-file src="src/ios/CardFlightSDK/libCardFlightLibrary.a" framework="true" />
+    </platform>
+</plugin>
