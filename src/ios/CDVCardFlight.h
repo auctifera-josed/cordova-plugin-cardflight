@@ -11,11 +11,14 @@
 #import <Cordova/CDV.h>
 #import "CardFlight.h"
 
-@interface CordovaCardFlight : CDVPlugin <CFTReaderDelegate> {}
+@interface CDVCardFlight : CDVPlugin <CFTReaderDelegate>
 
 - (void)setCardFlightAccount:(CDVInvokedUrlCommand *)command;
+- (void)getAccount:(CDVInvokedUrlCommand *)command;
+- (void)setDefaultCurrency:(CDVInvokedUrlCommand *)command;
 - (void)charge:(CDVInvokedUrlCommand *)command;
 - (void)refund:(CDVInvokedUrlCommand *)command;
 - (void)getCard:(CDVInvokedUrlCommand *)command;
+- (void)newSwipe:(CDVInvokedUrlCommand *)command;
 
 @end

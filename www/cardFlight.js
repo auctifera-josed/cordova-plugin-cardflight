@@ -1,74 +1,36 @@
-var argscheck = require('cordova/argscheck'),
-  channel = require('cordova/channel'),
-  utils = require('cordova/utils'),
-  exec = require('cordova/exec'),
-  cordova = require('cordova');
+var exec = require('cordova/exec');
 
-channel.createSticky('onCordovaCardFlightReady');
-channel.waitForInitialization('onCordovaCardFlightReady');
-
-function CardFlight() {
-    this.available = false;
-    this.platform = null;
-    this.cordova = null;
-    this.config = null;
-
-    var _this = this;
-
-    channel.onCordovaReady.subscribe(function() {
-      _this.initialize();
-    });
-}
-
-CardFlight.prototype.configure = function(options) {
-  var successCallback = function() {
-    console.log("SUCCESSFULLY SET TOKENS");
-  };
-  var errorCallback = function() {
-    console.log("ERROR SETTING TOKENS");
-}
-  this.setApiTokens(successCallback, errorCallback, options);
-}
-
-CardFlight.prototype.initialize = function() {
-
-  var successCallback = function() {
-    console.log("startOnReaderAttached Successful");
-  };
-  var errorCallback = function() {
-    console.log("startOnReaderAttached failure");
+module.exports = {
+  setAccount: function (apiKey, accountToken, callback) {
+    var connected = false;
+    exec(function (result) {
+      if (!connected) {
+        callback(null, result);
+        connected = true;
+      } else {
+        cordova.fireWindowEvent("cardFlightEvent", result);
+      }
+    },
+    function (error) {
+      callback(error)
+    }, 'CDVCardFlight', 'setCardFlightAccount', [apiKey, accountToken]);
+  },
+  getAccount: function (success, error) {
+    exec(success, error, "CDVCardFlight", "getAccount", []);
+  },
+  charge: function (amount, success, error, currency) {
+    exec(success, error, "CDVCardFlight", "charge", [amount, currency]);
+  },
+  refund: function (amount, chargeToken, success, error) {
+    exec(success, error, "CDVCardFlight", "refund", [amount, chargeToken]);
+  },
+  getCurrentCard: function (success, error) {
+    exec(success, error, "CDVCardFlight", "getCard", []);
+  },
+  newSwipe: function (success, error) {
+   exec(success, error, "CDVCardFlight", "newSwipe", []);
+  },
+  setCurrency: function(currency, success, error) {
+    exec(success, error, "CDVCardFlight", "setDefaultCurrency", [currency]);
   }
-  this.startOnReaderAttached(successCallback, errorCallback);
-  this.startOnReaderConnected(successCallback, errorCallback);
-  this.startOnReaderDisconnected(successCallback, errorCallback);
-  this.startOnReaderConnecting(successCallback, errorCallback);
-
-  channel.onCordovaCardFlightReady.fire();
-}
-
-
-CardFlight.prototype.setApiTokens = function(successCallback, errorCallback, options) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "setApiTokens", [options.apiToken, options.accountToken]);
 };
-
-CardFlight.prototype.beginSwipe = function(successCallback, errorCallback) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "swipeCard", []);
-};
-
-CardFlight.prototype.startOnReaderAttached = function(successCallback, errorCallback) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "startOnReaderAttached", []);
-};
-
-CardFlight.prototype.startOnReaderConnected = function(successCallback, errorCallback) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "startOnReaderConnected", []);
-};
-
-CardFlight.prototype.startOnReaderDisconnected = function(successCallback, errorCallback) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "startOnReaderDisconnected", []);
-};
-
-CardFlight.prototype.startOnReaderConnecting = function(successCallback, errorCallback) {
-    exec(successCallback, errorCallback, "CDVCardFlight", "startOnReaderConnecting", []);
-};
-               
-module.exports = new CardFlight();
