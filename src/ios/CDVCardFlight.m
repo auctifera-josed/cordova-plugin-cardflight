@@ -48,7 +48,7 @@ static NSString *dataCallbackId = nil;
         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
     }
     
-    [[CFTSessionManager sharedInstance] setLogging:YES];
+    // [[CFTSessionManager sharedInstance] setLogging:YES];
     dataCallbackId = command.callbackId;
     [result setKeepCallbackAsBool:YES];
     [self.commandDelegate sendPluginResult:result callbackId:dataCallbackId];
