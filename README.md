@@ -13,6 +13,16 @@ function onDeviceReady() {
 }
 ```
 
+Note: Plugin requires the following frameworks, although plugin adds them, recheck that are properly referenced in xcode project:
+
+- AVFoundation
+- AudioToolbox
+- MediaPlayer
+- MessageUI
+- ExternalAccessory
+- **CoreGraphics**
+- libstdc++.6.0.9.dylib
+
 ## Install
 
 Install using `cordova plugin add https://git-codecommit.us-east-1.amazonaws.com/v1/repos/cordova-plugin-cardflight`
