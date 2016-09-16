@@ -91,7 +91,7 @@ Note: - Convenient method to use if there is a **Swipe Error** event
 The `setCurrency(currency, success, error)` function to set the default currency for all future charges
 
 #### currency*
-A ISO 4217 Currency Code (e.g USD, EUR)
+A [ISO 4217](http://www.iso.org/iso/home/standards/currency_codes.htm) Currency Code (e.g USD, EUR)
 
 ### Get Account
 The `getAccount(success, error)` function returns the current account token from the session manager
