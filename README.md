@@ -2,6 +2,9 @@
 
 Cordova plugin for [CardFlight](http://www.cardflight.com)
 
+## Security
+Remember that all cordova code is exposed (client side) and you shouldn't store any private keys in code.
+
 ## Use
 This plugin defines global **cardFlight** object.
 
