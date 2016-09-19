@@ -32,5 +32,14 @@ module.exports = {
   },
   setCurrency: function(currency, success, error) {
     exec(success, error, "CDVCardFlight", "setDefaultCurrency", [currency]);
+  },
+  cancelTransaction: function(success, error) {
+    exec(success, error, "CDVCardFlight", "cancelTransaction", []);
+  },
+  addCardTypedView: function(paymentView, success, error) {
+    exec(success, error, "CDVCardFlight", "addCardTypedView", [paymentView]);
+  },
+  removeCardTypedView: function (success, error) {
+    exec(success, error, "CDVCardFlight", "removeCardTypedView", []);
   }
 };

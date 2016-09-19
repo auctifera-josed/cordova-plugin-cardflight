@@ -11,7 +11,7 @@
 #import <Cordova/CDV.h>
 #import "CardFlight.h"
 
-@interface CDVCardFlight : CDVPlugin <CFTReaderDelegate>
+@interface CDVCardFlight : CDVPlugin <CFTReaderDelegate, CFTPaymentViewDelegate>
 
 - (void)setCardFlightAccount:(CDVInvokedUrlCommand *)command;
 - (void)getAccount:(CDVInvokedUrlCommand *)command;
@@ -20,5 +20,9 @@
 - (void)refund:(CDVInvokedUrlCommand *)command;
 - (void)getCard:(CDVInvokedUrlCommand *)command;
 - (void)newSwipe:(CDVInvokedUrlCommand *)command;
+- (void)cancelTransaction:(CDVInvokedUrlCommand *)command;
+- (void)addCardTypedView:(CDVInvokedUrlCommand *)command;
+- (void)removeCardTypedView:(CDVInvokedUrlCommand *)command;
+- (void)setLogging:(CDVInvokedUrlCommand *)command;
 
 @end

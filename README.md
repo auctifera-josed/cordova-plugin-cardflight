@@ -96,6 +96,46 @@ A [ISO 4217](http://www.iso.org/iso/home/standards/currency_codes.htm) Currency 
 ### Get Account
 The `getAccount(success, error)` function returns the current account token from the session manager
 
+### Cancel Transaction
+The `cancelTransaction(success, error)` function cancels the last reader transaction.
+
+Note: This method should be use if the newSwipe method was called but there wasn't an actual card swipe and anytime the reader shouldn't be expecting a swipe.
+
+### Add Card Typed View
+The `addCardTypedView(paymentView, success, error)` function adds a CFTPaymentView to accept user input with card information. It takes a paymentView object to create the view.
+
+**This method overrides any previous view with the new one.**
+
+#### paymentView*
+An object to create a paymentView, e.g:
+```javascript
+{
+  "x": 20,
+  "y": 20,
+  "width": 200,
+  "height": 20,
+  "keyboardAppearance": "dark",
+  "border-color": {
+    "red": 1.0,
+    "green": 1.0,
+    "blue": 1.0,
+    "alpha": 1.0
+  },
+  "focus" : true
+}
+```
+x*,y*: position on screen
+width*, height*: size
+keyboardApperance options:
+  - dark
+  - alert
+  - default
+  - light
+focus*: indicates if view should be focus uppon creation
+
+### Remove Card Typed View
+The `removeCardTypedView(success, error)` function removes from the super view the last created view with the method 'addCardTypedView'
+
 ### CardFlight events
 
 Listen to printer events as cases of the **cardFlightEvent** event, cases are:

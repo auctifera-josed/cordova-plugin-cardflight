@@ -10,8 +10,9 @@
 
 @interface CDVCardFlight()
 
-@property (nonatomic, strong) CFTCard *swipedCard;
+@property (nonatomic, strong) CFTCard *card;
 @property (nonatomic, strong) CFTReader *reader;
+@property (nonatomic, strong) CFTPaymentView *paymentView;
 @property (nonatomic, strong) NSMutableString *currency;
 
 @end
@@ -89,7 +90,7 @@ static NSString *dataCallbackId = nil;
         }
         
         if (amount){
-            BOOL response = [self chargeCard:self.swipedCard withAmount:amount currency:self.currency];
+            BOOL response = [self chargeCard:self.card withAmount:amount currency:self.currency];
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:response];
         } else {
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
@@ -132,8 +133,8 @@ static NSString *dataCallbackId = nil;
     [self.commandDelegate runInBackground:^{
         
         CDVPluginResult *result = nil;
-        if (self.swipedCard) {
-            NSString *cardString = [NSString stringWithFormat:@"************%@", self.swipedCard.last4];
+        if (self.card) {
+            NSString *cardString = [NSString stringWithFormat:@"************%@", self.card.last4];
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:cardString];
         } else {
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
@@ -147,6 +148,80 @@ static NSString *dataCallbackId = nil;
         [self.reader beginSwipe];
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
     }];
+}
+
+- (void)cancelTransaction:(CDVInvokedUrlCommand *)command {
+  [self.commandDelegate runInBackground:^{
+    [self.reader cancelTransaction];
+    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
+  }];
+}
+
+- (void)addCardTypedView:(CDVInvokedUrlCommand *)command {
+  // [self.commandDelegate runInBackground:^{
+    CDVPluginResult *result = nil;
+    NSDictionary *paymentViewInfo = nil;
+    NSDictionary *bc = nil;
+    
+    if (command.arguments.count > 0) {
+      paymentViewInfo = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[command.arguments objectAtIndex:0] options:0 error:nil];
+      bc = paymentViewInfo[@"border-color"];
+    }
+
+    if (paymentViewInfo){
+      CGRect rect = CGRectMake( [paymentViewInfo[@"x"] intValue], 
+                                [paymentViewInfo[@"y"] intValue], 
+                                [paymentViewInfo[@"width"] intValue], 
+                                [paymentViewInfo[@"height"] intValue]);
+      self.paymentView = nil;
+      //Init with dimensions
+      self.paymentView = [[CFTPaymentView alloc] initWithFrame:rect];
+      self.paymentView.delegate = self;
+      //Keyboard Appearance
+      [self.paymentView useKeyboardAppearance:[self getKeyboardAppearance:paymentViewInfo[@"keyboardAppearance"]]];
+      //Border Color
+      [self.paymentView useBorderColor:[UIColor colorWithRed:[bc[@"red"] floatValue] green:[bc[@"green"] floatValue] blue:[bc[@"blue"] floatValue] alpha:[bc[@"alpha"] floatValue]]];
+      [self.webView.superview addSubview:self.paymentView];
+      //Focus
+      if ([paymentViewInfo[@"focus"] boolValue])
+        [self.paymentView becomeFirstResponder];
+      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
+    } else {
+      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
+    }
+    
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+  // }];
+}
+- (void)removeCardTypedView:(CDVInvokedUrlCommand *)command {
+  [self.commandDelegate runInBackground:^{
+    [self.paymentView removeFromSuperview];
+    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
+  }];
+}
+
+- (void)setLogging:(CDVInvokedUrlCommand *)command {
+  [self.commandDelegate runInBackground:^{
+    CDVPluginResult *result = nil;
+    BOOL logging = YES;
+    if (command.arguments.count > 0) {
+      logging = [[command.arguments objectAtIndex:0] boolValue];
+      [[CFTSessionManager sharedInstance] setLogging:logging];
+      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
+    } else
+      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+  }];
+}
+
+#pragma mark - Payment View Delegate
+
+- (void)keyedCardResponse:(CFTCard *)card {
+    
+    if (card) {
+        self.card = card;
+        [self sendData:@"card" withData:[NSString stringWithFormat:@"************%@", self.card.last4]];
+    }
 }
 
 #pragma mark - Reader Delegate
@@ -178,8 +253,8 @@ static NSString *dataCallbackId = nil;
 }
 - (void)readerCardResponse:(CFTCard *)card withError:(NSError *)error {
     if (card) {
-        self.swipedCard = card;
-        [self sendData:@"card" withData:[NSString stringWithFormat:@"************%@", self.swipedCard.last4]];
+        self.card = card;
+        [self sendData:@"card" withData:[NSString stringWithFormat:@"************%@", self.card.last4]];
     } else {
         [self sendData:@"card" withData:error.localizedDescription];
     }
@@ -205,7 +280,7 @@ static NSString *dataCallbackId = nil;
                                success:^(CFTCharge *charge) {
                                    [response setObject:[NSNumber numberWithBool:YES] forKey:@"success"];
                                    [response addEntriesFromDictionary:[CDVCardFlight chargeToDictionary:charge]];
-                                   self.swipedCard = nil;
+                                   self.card = nil;
                                    [self sendData:@"charge" withDictionary:response];
                                }
                                failure:^(NSError *error) {
@@ -228,6 +303,20 @@ static NSString *dataCallbackId = nil;
     [dict setObject:charge.amountRefunded forKey:@"amountRefunded"];
     [dict setObject:[NSString stringWithFormat:@"%@", charge.created] forKey:@"createdDate"];
     return dict;
+}
+
+- (UIKeyboardAppearance)getKeyboardAppearance:(NSString *)appearance {
+  if (appearance){
+    if ([appearance isEqualToString:@"dark"])
+      return UIKeyboardAppearanceDark;
+    else if ([appearance isEqualToString:@"default"])
+      return UIKeyboardAppearanceDefault;
+    else if ([appearance isEqualToString:@"alert"])
+      return UIKeyboardAppearanceAlert;
+    else if ([appearance isEqualToString:@"light"])
+      return UIKeyboardAppearanceLight;
+  } else
+    return UIKeyboardAppearanceDark;
 }
 
 - (void)sendData:(NSString *)dataType withData:(NSString *)data {
