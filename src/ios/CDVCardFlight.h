@@ -24,5 +24,5 @@
 - (void)addCardTypedView:(CDVInvokedUrlCommand *)command;
 - (void)removeCardTypedView:(CDVInvokedUrlCommand *)command;
 - (void)setLogging:(CDVInvokedUrlCommand *)command;
-
+- (void)readerInit:(CDVInvokedUrlCommand *)command;
 @end

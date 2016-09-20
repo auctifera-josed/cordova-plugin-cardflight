@@ -41,5 +41,11 @@ module.exports = {
   },
   removeCardTypedView: function (success, error) {
     exec(success, error, "CDVCardFlight", "removeCardTypedView", []);
+  },
+  setLogging: function (logging, success, error) {
+    exec(success, error, "CDVCardFlight", "setLogging", [logging]);
+  },
+  readerInit:function (success, error) {
+    exec(success, error, "CDVCardFlight", "readerInit", []);
   }
 };

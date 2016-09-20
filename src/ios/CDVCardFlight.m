@@ -27,40 +27,46 @@
 static NSString *dataCallbackId = nil;
 
 - (void)setCardFlightAccount:(CDVInvokedUrlCommand *)command {
-    //    [self.commandDelegate runInBackground:^{
-    CDVPluginResult *result = nil;
-    NSString    *apiToken = nil,
-    *accountToken = nil;
-    
-    if (command.arguments.count > 0) {
-        apiToken = [command.arguments objectAtIndex:0];
-        accountToken = [command.arguments objectAtIndex:1];
-    }
-    
-    if (apiToken && accountToken){
-        [[CFTSessionManager sharedInstance] setApiToken:apiToken
-                                           accountToken:accountToken
-                                              completed:^(BOOL emvReady){}];
-        self.reader = nil;
-        self.reader = [[CFTReader alloc] initWithReader:0];
-        self.reader.delegate = self;
-        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
-    } else {
-        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
-    }
-    
-    // [[CFTSessionManager sharedInstance] setLogging:YES];
-    dataCallbackId = command.callbackId;
-    [result setKeepCallbackAsBool:YES];
-    [self.commandDelegate sendPluginResult:result callbackId:dataCallbackId];
-    //    }];
+    [self.commandDelegate runInBackground:^{
+        //        dispatch_async(dispatch_get_main_queue(), ^{
+        CDVPluginResult *result = nil;
+        NSString    *apiToken = nil,
+        *accountToken = nil;
+        
+        if (command.arguments.count > 0) {
+            apiToken = [command.arguments objectAtIndex:0];
+            accountToken = [command.arguments objectAtIndex:1];
+        }
+        
+        if (apiToken && accountToken){
+            [[CFTSessionManager sharedInstance] setApiToken:apiToken
+                                               accountToken:accountToken
+                                                  completed:^(BOOL emvReady){}];
+            [self initReader];
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
+        } else {
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
+        }
+        
+        dataCallbackId = command.callbackId;
+        [result setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:dataCallbackId];
+        //        });
+    }];
+}
+
+- (void)readerInit:(CDVInvokedUrlCommand *)command {
+    [self.commandDelegate runInBackground:^{
+        [self initReader];
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
+    }];
 }
 
 - (void)getAccount:(CDVInvokedUrlCommand *)command {
-  [self.commandDelegate runInBackground:^{
-    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[CFTSessionManager sharedInstance] accountToken]];
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-  }];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[CFTSessionManager sharedInstance] accountToken]];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 - (void)setDefaultCurrency:(CDVInvokedUrlCommand *)command {
@@ -106,7 +112,8 @@ static NSString *dataCallbackId = nil;
         NSString *token = nil;
         
         if (command.arguments.count > 0) {
-            amount = [NSDecimalNumber decimalNumberWithString:[command.arguments objectAtIndex:0]];
+            NSString *amountString = [NSString stringWithFormat:@"%@",[command.arguments objectAtIndex:0]];
+            amount = [NSDecimalNumber decimalNumberWithString:amountString];
             token = [command.arguments objectAtIndex:1];
         }
         
@@ -114,7 +121,7 @@ static NSString *dataCallbackId = nil;
             [CFTCharge refundChargeWithToken:token
                                    andAmount:amount
                                      success:^(CFTCharge *charge) {
-                                         [self sendData:@"refund" withData:[NSString stringWithFormat:@"%@",charge.amountRefunded]];
+                                         [self sendData:@"charge" withDictionary:[CDVCardFlight chargeToDictionary:charge]];
                                      }
                                      failure:^(NSError *error) {
                                          NSLog(@"%@", error.localizedDescription);
@@ -134,7 +141,7 @@ static NSString *dataCallbackId = nil;
         
         CDVPluginResult *result = nil;
         if (self.card) {
-            NSString *cardString = [NSString stringWithFormat:@"************%@", self.card.last4];
+            NSString *cardString = [NSString stringWithFormat:@"%@", self.card.last4];
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:cardString];
         } else {
             result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:NO];
@@ -151,67 +158,83 @@ static NSString *dataCallbackId = nil;
 }
 
 - (void)cancelTransaction:(CDVInvokedUrlCommand *)command {
-  [self.commandDelegate runInBackground:^{
-    [self.reader cancelTransaction];
-    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
-  }];
+    [self.commandDelegate runInBackground:^{
+        self.card = nil;
+        if (self.paymentView){
+            [self.paymentView removeFromSuperview];
+            self.paymentView = nil;
+        }
+        if (self.reader){
+            [self.reader cancelTransaction];
+            self.reader = nil;
+        }
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
+    }];
 }
 
 - (void)addCardTypedView:(CDVInvokedUrlCommand *)command {
-  // [self.commandDelegate runInBackground:^{
-    CDVPluginResult *result = nil;
-    NSDictionary *paymentViewInfo = nil;
-    NSDictionary *bc = nil;
-    
-    if (command.arguments.count > 0) {
-      paymentViewInfo = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[command.arguments objectAtIndex:0] options:0 error:nil];
-      bc = paymentViewInfo[@"border-color"];
-    }
-
-    if (paymentViewInfo){
-      CGRect rect = CGRectMake( [paymentViewInfo[@"x"] intValue], 
-                                [paymentViewInfo[@"y"] intValue], 
-                                [paymentViewInfo[@"width"] intValue], 
-                                [paymentViewInfo[@"height"] intValue]);
-      self.paymentView = nil;
-      //Init with dimensions
-      self.paymentView = [[CFTPaymentView alloc] initWithFrame:rect];
-      self.paymentView.delegate = self;
-      //Keyboard Appearance
-      [self.paymentView useKeyboardAppearance:[self getKeyboardAppearance:paymentViewInfo[@"keyboardAppearance"]]];
-      //Border Color
-      [self.paymentView useBorderColor:[UIColor colorWithRed:[bc[@"red"] floatValue] green:[bc[@"green"] floatValue] blue:[bc[@"blue"] floatValue] alpha:[bc[@"alpha"] floatValue]]];
-      [self.webView.superview addSubview:self.paymentView];
-      //Focus
-      if ([paymentViewInfo[@"focus"] boolValue])
-        [self.paymentView becomeFirstResponder];
-      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
-    } else {
-      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
-    }
-    
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-  // }];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult *result = nil;
+        NSDictionary *paymentViewInfo = nil;
+        NSDictionary *bc = nil;
+        
+        if (command.arguments.count > 0) {
+            paymentViewInfo = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[[command.arguments objectAtIndex:0] dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
+            bc = paymentViewInfo[@"border-color"];
+        }
+        
+        if (paymentViewInfo){
+            dispatch_async(dispatch_get_main_queue(), ^{
+                CGRect rect = CGRectMake( [paymentViewInfo[@"x"] intValue],
+                                         [paymentViewInfo[@"y"] intValue],
+                                         [paymentViewInfo[@"width"] intValue],
+                                         [paymentViewInfo[@"height"] intValue]);
+                //Making sure only one paymentView exists in the UI
+                if (self.paymentView){
+                    [self.paymentView removeFromSuperview];
+                    self.paymentView = nil;
+                }
+                //Init with dimensions
+                self.paymentView = [[CFTPaymentView alloc] initWithFrame:rect];
+                self.paymentView.delegate = self;
+                //Keyboard Appearance
+                [self.paymentView useKeyboardAppearance:[self getKeyboardAppearance:paymentViewInfo[@"keyboardAppearance"]]];
+                //Border Color
+                [self.paymentView useBorderColor:[UIColor colorWithRed:[bc[@"red"] floatValue] green:[bc[@"green"] floatValue] blue:[bc[@"blue"] floatValue] alpha:[bc[@"alpha"] floatValue]]];
+                [self.webView.superview addSubview:self.paymentView];
+                //Focus
+                if ([paymentViewInfo[@"focus"] boolValue])
+                    [self.paymentView becomeFirstResponder];
+            });
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsBool:YES];
+        } else {
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
+        }
+        
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 - (void)removeCardTypedView:(CDVInvokedUrlCommand *)command {
-  [self.commandDelegate runInBackground:^{
-    [self.paymentView removeFromSuperview];
-    [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES] callbackId:command.callbackId];
-  }];
+    [self.commandDelegate runInBackground:^{
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.paymentView removeFromSuperview];
+        });
+        [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsBool:YES] callbackId:command.callbackId];
+    }];
 }
 
 - (void)setLogging:(CDVInvokedUrlCommand *)command {
-  [self.commandDelegate runInBackground:^{
-    CDVPluginResult *result = nil;
-    BOOL logging = YES;
-    if (command.arguments.count > 0) {
-      logging = [[command.arguments objectAtIndex:0] boolValue];
-      [[CFTSessionManager sharedInstance] setLogging:logging];
-      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
-    } else
-      result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
-    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-  }];
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult *result = nil;
+        BOOL logging = NO;
+        if (command.arguments.count > 0) {
+            logging = [[command.arguments objectAtIndex:0] boolValue];
+            [[CFTSessionManager sharedInstance] setLogging:logging];
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
+        } else
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments"];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }];
 }
 
 #pragma mark - Payment View Delegate
@@ -220,7 +243,7 @@ static NSString *dataCallbackId = nil;
     
     if (card) {
         self.card = card;
-        [self sendData:@"card" withData:[NSString stringWithFormat:@"************%@", self.card.last4]];
+        [self sendData:@"card" withData:[NSString stringWithFormat:@"%@", self.card.last4]];
     }
 }
 
@@ -263,14 +286,20 @@ static NSString *dataCallbackId = nil;
     [self sendData:@"reader" withData:@"not_detected"];
 }
 
-
 #pragma mark - Private Methods
+
+- (void)initReader {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        self.reader = nil;
+        self.reader = [[CFTReader alloc] initWithReader:0];
+        self.reader.delegate = self;
+    });
+}
 
 - (BOOL)chargeCard:(CFTCard *)card
         withAmount:(NSDecimalNumber *)amount
           currency:(NSString *)currency {
     BOOL success = YES;
-    NSMutableDictionary *response = [[NSMutableDictionary alloc] init];
     
     if (card) {
         NSDictionary *paymentInfo = @{@"amount":amount,
@@ -278,10 +307,7 @@ static NSString *dataCallbackId = nil;
         
         [card chargeCardWithParameters:paymentInfo
                                success:^(CFTCharge *charge) {
-                                   [response setObject:[NSNumber numberWithBool:YES] forKey:@"success"];
-                                   [response addEntriesFromDictionary:[CDVCardFlight chargeToDictionary:charge]];
-                                   self.card = nil;
-                                   [self sendData:@"charge" withDictionary:response];
+                                   [self sendData:@"charge" withDictionary:[CDVCardFlight chargeToDictionary:charge]];
                                }
                                failure:^(NSError *error) {
                                    NSLog(@"%@", error.localizedDescription);
@@ -306,16 +332,16 @@ static NSString *dataCallbackId = nil;
 }
 
 - (UIKeyboardAppearance)getKeyboardAppearance:(NSString *)appearance {
-  if (appearance){
-    if ([appearance isEqualToString:@"dark"])
-      return UIKeyboardAppearanceDark;
-    else if ([appearance isEqualToString:@"default"])
-      return UIKeyboardAppearanceDefault;
-    else if ([appearance isEqualToString:@"alert"])
-      return UIKeyboardAppearanceAlert;
-    else if ([appearance isEqualToString:@"light"])
-      return UIKeyboardAppearanceLight;
-  } else
+    if (appearance){
+        if ([appearance isEqualToString:@"dark"])
+            return UIKeyboardAppearanceDark;
+        else if ([appearance isEqualToString:@"default"])
+            return UIKeyboardAppearanceDefault;
+        else if ([appearance isEqualToString:@"alert"])
+            return UIKeyboardAppearanceAlert;
+        else if ([appearance isEqualToString:@"light"])
+            return UIKeyboardAppearanceLight;
+    }
     return UIKeyboardAppearanceDark;
 }
 
