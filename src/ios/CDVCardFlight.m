@@ -161,7 +161,9 @@ static NSString *dataCallbackId = nil;
     [self.commandDelegate runInBackground:^{
         self.card = nil;
         if (self.paymentView){
-            [self.paymentView removeFromSuperview];
+            dispatch_async(dispatch_get_main_queue(), ^{
+              [self.paymentView removeFromSuperview];
+            });
             self.paymentView = nil;
         }
         if (self.reader){
@@ -277,7 +279,7 @@ static NSString *dataCallbackId = nil;
 - (void)readerCardResponse:(CFTCard *)card withError:(NSError *)error {
     if (card) {
         self.card = card;
-        [self sendData:@"card" withData:[NSString stringWithFormat:@"************%@", self.card.last4]];
+        [self sendData:@"card" withData:[NSString stringWithFormat:@"%@", self.card.last4]];
     } else {
         [self sendData:@"card" withData:error.localizedDescription];
     }

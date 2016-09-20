@@ -18,13 +18,13 @@ function onDeviceReady() {
 
 Note: Plugin requires the following frameworks, although plugin adds them, recheck that are properly referenced in xcode project:
 
+- libstdc++.6.0.9.dylib
 - AVFoundation
 - AudioToolbox
 - MediaPlayer
 - MessageUI
 - ExternalAccessory
-- **CoreGraphics**
-- libstdc++.6.0.9.dylib
+- **CoreGraphics** //Sometimes this framework is not added. This can be manually added in xcode from Build Phases --> Link Binary With Libraries --> + --> CoreGraphics.framework --> Add
 
 ## Install
 
@@ -44,10 +44,9 @@ cardFlight.charge(100, 'USD', function(res) {
     console.log(res);
 })
 ```
-true = success | false = error
+true = success | false = error (Activate logging to identify error)
 
 ## Reference
-Available methods
 
 1. [setAccount](README.md#setaccount) //Should be called first, calls readerInit
 2. [getAccount](README.md#getaccount)
@@ -78,7 +77,7 @@ The Merchant Account's token
 function(err,res){}
 
 ### [Charge](#charge)
-The `charge(amount, success, error[, currency])` function creates a charge of the given amount to the last swiped/typed credit card. Throws error if card is null
+The `charge(amount, success, error[, currency])` function creates a charge of the given amount to the last swiped/typed credit card. Charge event returns error if card is null
 
 #### amount*
 The amount to be charged
@@ -141,14 +140,14 @@ An object to create a paymentView, e.g:
   "focus" : true
 }
 ```
-x*,y*: position on screen
-width*, height*: size
-keyboardApperance options:
+- x*,y*: position on screen
+- width*, height*: size
+- keyboardApperance options:
   - dark
   - alert
   - default
   - light
-focus*: indicates if view should be focus uppon creation
+- focus*: indicates if view should be focus uppon creation
 
 ### [Remove Card Typed View](#removecardtypedview)
 The `removeCardTypedView(success, error)` function removes from the super view the last created view with the method 'addCardTypedView'
@@ -169,7 +168,7 @@ The `readerInit(success, error)` function initializes the reader object to start
 Listen to reader and card events as cases of the **cardFlightEvent** event, cases are:
 1. reader
   1. attached
-  1. connected
+  1. connected //Calls `newSwipe` method
   1. disconnected
   1. swipe
 2. card
@@ -179,8 +178,7 @@ Listen to reader and card events as cases of the **cardFlightEvent** event, case
 4. charge
 5. error
 
-Charge and Refund events return a charge object:
-
+Charge and Refund events return a **charge object**:
 ```javascript
 { 
   "amount": xxx,

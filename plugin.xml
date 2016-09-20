@@ -20,15 +20,15 @@
         <param name="ios-package" value="CDVCardFlight"/>
       </feature>
     </config-file>
+
     <config-file target="*-Info.plist" parent="NSMicrophoneUsageDescription">
-      <string>To detect CardFlight attached reader</string>
+      <string>To detect CardFlight's attached reader</string>
     </config-file>
 
     <header-file src="src/ios/CDVCardFlight.h" />
     <source-file src="src/ios/CDVCardFlight.m" />
 
     <header-file src="src/ios/CardFlightSDK/CardFlight.h" />
-    <!-- <header-file src="src/ios/CardFlightSDK/CFTAccount.h" /> -->
     <header-file src="src/ios/CardFlightSDK/CFTAttacheReader.h" />
     <header-file src="src/ios/CardFlightSDK/CFTBaseReader.h" />
     <header-file src="src/ios/CardFlightSDK/CFTCustomEntryTextField.h" />
