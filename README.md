@@ -187,7 +187,6 @@ Charge and Refund events return a charge object:
   "amountRefunded": xxx,
   "createdDate": "YYYY-MM-DD HH:MM:SS Z",
   "isRefunded": bool,
-  "success": bool,
   "token": "charge_secret_token"
  }
 ```
