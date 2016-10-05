@@ -28,7 +28,7 @@ Note: Plugin requires the following frameworks, although plugin adds them, reche
 
 ## Install
 
-Install using `cordova plugin add https://git-codecommit.us-east-1.amazonaws.com/v1/repos/cordova-plugin-cardflight`
+Install using `cordova plugin add https://github.com/auctifera-josed/cordova-plugin-cardflight`
 
 ## Example
 ```javascript
