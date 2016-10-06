@@ -48,19 +48,19 @@ true = success | false = error (Activate logging to identify error)
 
 ## Reference
 
-1. [setAccount](README.md#setaccount) //Should be called first, calls readerInit
-2. [getAccount](README.md#getaccount)
-3. [charge](README.md#charge)
-4. [refund](README.md#refund)
-5. [getCurrentCard](README.md#getcurrentcard)
-6. [newSwipe](README.md#newswipe)
-7. [setCurrency](README.md#setcurrency)
-8. [cancelTransaction](README.md#canceltransaction)
-9. [addCardTypedView](README.md#addcardtypedview)
-10. [removeCardTypedView](README.md#removecardtypedview)
-11. [setLogging](README.md#setlogging)
-12. [readerInit](README.md#readerinit)
-13. [cardFlightEvent](README.md#cardflightevents)
+1. [setAccount](#setaccount) //Should be called first, calls readerInit
+2. [getAccount](#getaccount)
+3. [charge](#charge)
+4. [refund](#refund)
+5. [getCurrentCard](#getcurrentcard)
+6. [newSwipe](#newswipe)
+7. [setCurrency](#setcurrency)
+8. [cancelTransaction](#canceltransaction)
+9. [addCardTypedView](#addcardtypedview)
+10. [removeCardTypedView](#removecardtypedview)
+11. [setLogging](#setlogging)
+12. [readerInit](#readerinit)
+13. [cardFlightEvent](#cardflightevents)
 
 ## API
 
